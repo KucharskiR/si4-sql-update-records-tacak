@@ -1,0 +1,10 @@
+# Ignoruj plik ze zmiennymi środowiskowymi
+.env
+
+# Ignoruj katalogi środowisk wirtualnych
+venv/
+*/venv/
+
+# Ignoruj pliki cache Pythona
+__pycache__/
+*.pyc
