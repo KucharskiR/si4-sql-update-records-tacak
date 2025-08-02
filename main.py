@@ -11,9 +11,9 @@ DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
-# Zapytanie SQL do pobrania projektów
+# Zapytanie SQL do pobrania wszystkich kolumn dla projektów
 # Zakładamy, że obieg "Projekty" ma ID 61
-SQL_QUERY = "SELECT WFD_ID, WFD_Signature, WFD_AttText1, WFD_AttText3 FROM WFElements WHERE WFD_DTYPEID = 61;"
+SQL_QUERY = "SELECT * FROM WFElements WHERE WFD_DTYPEID = 61;"
 
 def get_connection_string():
     """Tworzy connection string w zależności od metody uwierzytelniania."""
@@ -40,13 +40,16 @@ def fetch_projects():
             print("Nie znaleziono żadnych projektów.")
             return
 
+        # Pobieranie nazw kolumn z kursora
+        columns = [column[0] for column in cursor.description]
+
         # Wyświetlanie nagłówków
-        print(f"\n{'ID':<5} | {'Sygnatura':<15} | {'Numer Projektu':<20} | {'Nazwa Projektu'}")
-        print("-" * 80)
+        print(" | ".join(columns))
+        print("-" * (len(" | ".join(columns)) + 20)) # Dynamiczna szerokość
 
         # Wyświetlanie danych
         for row in rows:
-            print(f"{row.WFD_ID:<5} | {row.WFD_Signature:<15} | {row.WFD_AttText1:<20} | {row.WFD_AttText3}")
+            print(" | ".join(str(item) for item in row))
 
     except pyodbc.Error as ex:
         sqlstate = ex.args[0]
