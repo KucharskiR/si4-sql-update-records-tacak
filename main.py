@@ -13,7 +13,19 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 # Zapytanie SQL do pobrania wszystkich kolumn dla projektów
 # Zakładamy, że obieg "Projekty" ma ID 61
-SQL_QUERY = "SELECT * FROM WFElements WHERE WFD_DTYPEID = 61;"
+SQL_QUERY = """
+SELECT
+    WFD_AttText1 AS 'Numer_projektu',
+    WFD_AttText10 AS 'Kod_zadania',
+    WFD_AttText9 AS 'Numer_tematu',
+    WFD_AttText3 AS 'Nazwa_projektu',
+    dbo.ClearWFElem(WFD_AttChoose11) AS 'Status',
+    WFD_AttText8 AS 'Klient_skrot'
+FROM
+    WFElements
+WHERE
+    WFD_DTYPEID = 61;
+"""
 
 def get_connection_string():
     """Tworzy connection string w zależności od metody uwierzytelniania."""
