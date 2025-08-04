@@ -98,8 +98,46 @@ Skrypt `main_updater.py` służy do zapisu zmian w bazie. Uruchamiaj go z odpowi
 
 ---
 
+## Debugowanie z `ipdb`
+
+Do debugowania skryptów można wykorzystać bibliotekę `ipdb`, która pozwala na interaktywne zatrzymanie programu i analizę jego stanu.
+
+**1. Instalacja**
+
+Upewnij się, że `ipdb` jest zainstalowane, uruchamiając:
+```bash
+pip install -r requirements.txt
+```
+
+**2. Użycie**
+
+Aby rozpocząć sesję debugowania, wykonaj dwa proste kroki:
+
+*   **Zaimportuj bibliotekę** na początku pliku, który chcesz debugować (`main.py` lub `main_updater.py`):
+    ```python
+    import ipdb
+    ```
+
+*   **Ustaw punkt przerwania (breakpoint)** w miejscu, w którym chcesz zatrzymać wykonanie skryptu, wstawiając poniższą linię:
+    ```python
+    ipdb.set_trace()
+    ```
+
+Po uruchomieniu skryptu jego wykonanie zatrzyma się w miejscu, gdzie wstawiłeś `set_trace()`, a Ty uzyskasz dostęp do interaktywnej konsoli debuggera.
+
+**Podstawowe komendy `ipdb`:**
+
+*   `n` (next) – wykonaj następną linię kodu.
+*   `c` (continue) – kontynuuj normalne wykonywanie skryptu aż do następnego punktu przerwania.
+*   `q` (quit) – zakończ sesję debugowania i wyjdź ze skryptu.
+*   `p <zmienna>` (print) – wyświetl wartość podanej zmiennej (np. `p row`).
+*   `l` (list) – pokaż, w którym miejscu w kodzie aktualnie się znajdujesz.
+
+---
+
 ## Zależności
 
 *   `pyodbc`: Do połączenia z bazą danych SQL Server.
 *   `python-dotenv`: Do wczytywania zmiennych środowiskowych z pliku `.env`.
 *   `rich`: Do wyświetlania danych w estetyczny, kolorowy sposób w terminalu.
+*   `ipdb`: Do interaktywnego debugowania skryptów.
