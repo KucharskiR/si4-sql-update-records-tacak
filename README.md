@@ -25,14 +25,14 @@ Ten projekt zawiera dwa skrypty w języku Python, które służą do analizy i a
 
 **1. Pobranie zależności**
 
-Przejdź do katalogu `skrypt-python-aktualizacja-bazy` i zainstaluj wymagane biblioteki:
+Przejdź do głównego katalogu projektu i zainstaluj wymagane biblioteki:
 ```bash
 pip install -r requirements.txt
 ```
 
 **2. Konfiguracja połączenia z bazą danych (`.env`)**
 
-Jest to najważniejszy krok. Musisz utworzyć plik o nazwie `.env` w głównym katalogu skryptu (`skrypt-python-aktualizacja-bazy/.env`). Plik ten przechowuje poufne dane dostępowe do bazy i jest ignorowany przez Git.
+Jest to najważniejszy krok. Musisz utworzyć plik o nazwie `.env` w głównym katalogu skryptu. Plik ten przechowuje poufne dane dostępowe do bazy i jest ignorowany przez Git.
 
 Skrypt obsługuje dwie metody uwierzytelniania:
 
