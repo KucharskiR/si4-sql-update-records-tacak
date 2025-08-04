@@ -53,9 +53,10 @@ def update_database_record(cursor, wfd_id, new_data):
     
     cursor.execute(update_query, tuple(params))
 
-def process_and_update_projects(test_mode=False, single_record=False):
+def process_and_update_projects(mode='test'):
     """Nawiązuje połączenie z bazą danych, pobiera, przetwarza i opcjonalnie aktualizuje projekty."""
     connection = None
+    updated_count = 0
     try:
         conn_str = get_connection_string()
         connection = pyodbc.connect(conn_str)
@@ -80,7 +81,7 @@ def process_and_update_projects(test_mode=False, single_record=False):
         for row in rows:
             new_data = {}
             processing_info = []
-            update_status = "Pominięto"
+            update_status = "Pominięto (tryb testowy)"
 
             # 1. Przetwarzanie 'Numer projektu'
             numer_projektu = row.Numer_projektu
@@ -96,23 +97,36 @@ def process_and_update_projects(test_mode=False, single_record=False):
                 new_data['WFD_AttText8'] = nazwa_projektu.split('_', 1)[0] # Klient (skrót)
                 processing_info.append(f"Wyodrębniono 'Klient (skrót)' -> {new_data['WFD_AttText8']}")
 
-            if new_data and not test_mode:
+            if new_data and mode != 'test':
                 update_database_record(cursor, row.WFD_ID, new_data)
-                update_status = "Zaktualizowano"
-                if single_record:
+                update_status = f"[bold green]Zaktualizowano[/bold green] (ID: {row.WFD_ID})"
+                updated_count += 1
+                if mode == 'single':
                     connection.commit()
+                    # Add the current row to the table before printing and exiting
+                    row_values = [str(item if item is not None else '') for item in row]
+                    row_values.append("\n".join(processing_info))
+                    row_values.append(update_status)
+                    table.add_row(*row_values)
+                    console.print(table)
                     console.print(f"Zaktualizowano pojedynczy rekord (WFD_ID: {row.WFD_ID}) i zakończono.", style="bold green")
                     return
-
+            elif not new_data:
+                 update_status = "Brak zmian"
+            
             row_values = [str(item if item is not None else '') for item in row]
             row_values.append("\n".join(processing_info))
             row_values.append(update_status)
             table.add_row(*row_values)
 
         console.print(table)
-        if not test_mode:
+        
+        if mode == 'all':
             connection.commit()
-            console.print("Wszystkie rekordy zostały zaktualizowane.", style="bold green")
+            console.print(f"Zakończono. Zaktualizowano {updated_count} rekordów.", style="bold green")
+        elif mode == 'single':
+             console.print("Nie znaleziono rekordu do aktualizacji w trybie pojedynczym.", style="bold yellow")
+
 
     except pyodbc.Error as ex:
         sqlstate = ex.args[0]
@@ -127,9 +141,27 @@ def process_and_update_projects(test_mode=False, single_record=False):
             console.print("\nPołączenie z bazą danych zostało zamknięte.", style="bold blue")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Przetwarzanie i aktualizacja projektów w WEBCON BPS.")
-    parser.add_argument("--test", action="store_true", help="Uruchom w trybie testowym (bez zapisu do bazy danych).")
-    parser.add_argument("--single", action="store_true", help="Aktualizuj tylko jeden rekord i zakończ (do testów zapisu).")
+    parser = argparse.ArgumentParser(
+        description="Przetwarzanie i aktualizacja projektów w WEBCON BPS.",
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+    mode_group = parser.add_mutually_exclusive_group()
+    mode_group.add_argument("--single", action="store_true", help="Aktualizuj tylko PIERWSZY pasujący rekord i zakończ (do testów zapisu).")
+    mode_group.add_argument("--update-all", action="store_true", help="Aktualizuj WSZYSTKIE pasujące rekordy w bazie danych.")
+
     args = parser.parse_args()
 
-    process_and_update_projects(test_mode=args.test, single_record=args.single)
+    mode = 'test'
+    if args.single:
+        mode = 'single'
+    elif args.update_all:
+        mode = 'all'
+
+    if mode == 'all':
+        console.print("UWAGA: Ta operacja zaktualizuje wszystkie pasujące rekordy w bazie danych.", style="bold yellow")
+        if input("Czy na pewno chcesz kontynuować? (tak/nie): ").lower() != 'tak':
+            console.print("Operacja anulowana przez użytkownika.", style="bold red")
+            exit()
+            
+    process_and_update_projects(mode=mode)
+
