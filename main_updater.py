@@ -53,7 +53,7 @@ def update_database_record(cursor, wfd_id, new_data):
     
     cursor.execute(update_query, tuple(params))
 
-def process_and_update_projects(mode='test'):
+def process_and_update_projects(mode='test', only_missing=False):
     """Nawiązuje połączenie z bazą danych, pobiera, przetwarza i opcjonalnie aktualizuje projekty."""
     connection = None
     updated_count = 0
@@ -66,8 +66,12 @@ def process_and_update_projects(mode='test'):
         cursor.execute(SQL_QUERY)
         rows = cursor.fetchall()
 
+        if only_missing:
+            rows = [row for row in rows if not row.Kod_zadania or not row.Numer_tematu or not row.Klient_skrot]
+            console.print("Wyświetlanie tylko rekordów z brakującymi polami.", style="bold yellow")
+
         if not rows:
-            console.print("Nie znaleziono żadnych projektów.", style="bold red")
+            console.print("Nie znaleziono żadnych projektów do przetworzenia.", style="bold red")
             return
 
         columns = [column[0] for column in cursor.description]
@@ -145,6 +149,7 @@ if __name__ == "__main__":
         description="Przetwarzanie i aktualizacja projektów w WEBCON BPS.",
         formatter_class=argparse.RawTextHelpFormatter
     )
+    parser.add_argument("--only-missing", action="store_true", help="Przetwarzaj tylko te rekordy, które mają nieuzupełnione pola.")
     mode_group = parser.add_mutually_exclusive_group()
     mode_group.add_argument("--single", action="store_true", help="Aktualizuj tylko PIERWSZY pasujący rekord i zakończ (do testów zapisu).")
     mode_group.add_argument("--update-all", action="store_true", help="Aktualizuj WSZYSTKIE pasujące rekordy w bazie danych.")
@@ -163,5 +168,4 @@ if __name__ == "__main__":
             console.print("Operacja anulowana przez użytkownika.", style="bold red")
             exit()
             
-    process_and_update_projects(mode=mode)
-
+    process_and_update_projects(mode=mode, only_missing=args.only_missing)

@@ -6,11 +6,11 @@ Ten projekt zawiera dwa skrypty w języku Python, które służą do analizy i a
 
 1.  **`main.py`**
     *   **Cel:** Analiza i wizualizacja danych (tylko do odczytu).
-    *   **Funkcjonalność:** Łączy się z bazą danych, pobiera dane projektowe, przetwarza je w pamięci (bez zapisu do bazy) i wyświetla w czytelnej, kolorowej tabeli w terminalu. Idealny do weryfikacji, które projekty wymagają aktualizacji.
+    *   **Funkcjonalność:** Łączy się z bazą danych, pobiera dane projektowe, przetwarza je w pamięci (bez zapisu do bazy) i wyświetla w czytelnej, kolorowej tabeli w terminalu. Idealny do weryfikacji, które projekty wymagają aktualizacji. Posiada opcję filtrowania, aby pokazać tylko rekordy z brakującymi danymi.
 
 2.  **`main_updater.py`**
     *   **Cel:** Aktualizacja danych w bazie.
-    *   **Funkcjonalność:** Rozszerza możliwości `main.py` o funkcję zapisu przetworzonych danych z powrotem do bazy. Skrypt oferuje trzy tryby pracy dla zapewnienia bezpieczeństwa operacji.
+    *   **Funkcjonalność:** Rozszerza możliwości `main.py` o funkcję zapisu przetworzonych danych z powrotem do bazy. Skrypt oferuje trzy tryby pracy oraz opcję filtrowania, aby operacje dotyczyły tylko rekordów z brakującymi danymi.
 
 ---
 
@@ -73,26 +73,40 @@ Aby zobaczyć, które rekordy zostaną przetworzone, uruchom skrypt `main.py`:
 python main.py
 ```
 
+*   **Analiza tylko rekordów z brakami**
+    Aby wyświetlić tylko te rekordy, w których brakuje `Kodu zadania`, `Numeru tematu` lub `Klienta (skrót)`:
+    ```bash
+    python main.py --only-missing
+    ```
+
 **2. Aktualizacja danych**
 
 Skrypt `main_updater.py` służy do zapisu zmian w bazie. Uruchamiaj go z odpowiednimi flagami:
 
 *   **Tryb testowy (domyślny, "na sucho")**
-    Wyświetla, co zostałoby zaktualizowane, ale nie dokonuje żadnych zmian w bazie.
+    Wyświetla, co zostałoby zaktualizowane, ale nie dokonuje żadnych zmian w bazie. Działa na wszystkich rekordach.
     ```bash
     python main_updater.py
     ```
 
+*   **Tryb testowy dla rekordów z brakami**
+    Działa jak tryb testowy, ale pokazuje zmiany tylko dla rekordów z brakującymi polami.
+    ```bash
+    python main_updater.py --only-missing
+    ```
+
 *   **Aktualizacja jednego rekordu (do testów zapisu)**
-    Aktualizuje tylko pierwszy napotkany rekord, który wymaga zmian, a następnie kończy pracę. Idealne do sprawdzenia, czy zapis działa poprawnie.
+    Aktualizuje tylko pierwszy napotkany rekord, który wymaga zmian, a następnie kończy pracę. Można połączyć z `--only-missing`, aby działać na pierwszym rekordzie z brakami.
     ```bash
     python main_updater.py --single
+    python main_updater.py --only-missing --single
     ```
 
 *   **Pełna aktualizacja wszystkich rekordów**
-    Aktualizuje wszystkie rekordy, które tego wymagają. Ze względów bezpieczeństwa, przed uruchomieniem **poprosi o ostateczne potwierdzenie**.
+    Aktualizuje wszystkie rekordy, które tego wymagają. Ze względów bezpieczeństwa, przed uruchomieniem **poprosi o ostateczne potwierdzenie**. Można połączyć z `--only-missing`, aby zaktualizować wszystkie rekordy z brakami.
     ```bash
     python main_updater.py --update-all
+    python main_updater.py --only-missing --update-all
     ```
     Po uruchomieniu tego polecenia, wpisz `tak` i naciśnij Enter, aby rozpocząć masową aktualizację.
 

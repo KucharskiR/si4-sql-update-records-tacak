@@ -3,6 +3,7 @@ import pyodbc
 from dotenv import load_dotenv
 from rich.console import Console
 from rich.table import Table
+import argparse
 
 # Załadowanie zmiennych środowiskowych z pliku .env
 load_dotenv()
@@ -38,7 +39,7 @@ def get_connection_string():
     else:
         return f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={DB_SERVER};DATABASE={DB_NAME};Trusted_Connection=yes;"
 
-def fetch_projects():
+def fetch_projects(only_missing=False):
     """Nawiązuje połączenie z bazą danych, pobiera, przetwarza i wyświetla projekty."""
     connection = None
     try:
@@ -50,8 +51,12 @@ def fetch_projects():
         cursor.execute(SQL_QUERY)
         rows = cursor.fetchall()
 
+        if only_missing:
+            rows = [row for row in rows if not row.Kod_zadania or not row.Numer_tematu or not row.Klient_skrot]
+            console.print("Wyświetlanie tylko rekordów z brakującymi polami.", style="bold yellow")
+
         if not rows:
-            console.print("Nie znaleziono żadnych projektów.", style="bold red")
+            console.print("Nie znaleziono żadnych projektów do wyświetlenia.", style="bold red")
             return
 
         columns = [column[0] for column in cursor.description]
@@ -96,4 +101,12 @@ def fetch_projects():
             console.print("\nPołączenie z bazą danych zostało zamknięte.", style="bold blue")
 
 if __name__ == "__main__":
-    fetch_projects()
+    parser = argparse.ArgumentParser(
+        description="Analiza i wizualizacja danych projektowych w WEBCON BPS.",
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+    parser.add_argument("--only-missing", action="store_true", help="Wyświetl tylko te rekordy, które mają nieuzupełnione pola i mogą zostać zaktualizowane.")
+    
+    args = parser.parse_args()
+    
+    fetch_projects(only_missing=args.only_missing)
