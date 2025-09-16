@@ -5,13 +5,13 @@ from rich.console import Console
 from rich.table import Table
 import argparse
 
-# Załadowanie zmiennych środowiskowych z pliku .env
+# Załadowanie zmiennych środowiskowych
 load_dotenv()
 
-# Inicjalizacja konsoli Rich
+# Inicjalizacja konsoli
 console = Console()
 
-# Pobranie danych konfiguracyjnych
+# Konfiguracja bazy danych
 DB_SERVER = os.getenv("DB_SERVER")
 DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
@@ -21,7 +21,6 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 SQL_QUERY = """
 SELECT
     DET_ID,
-    DET_WFEID,
     DET_Att2 as 'Numer_projektu',
     DET_Att4 as 'Nazwa_projektu'
 FROM
@@ -39,20 +38,13 @@ def get_connection_string():
     else:
         return f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={DB_SERVER};DATABASE={DB_NAME};Trusted_Connection=yes;"
 
-def update_record(cursor, det_id, wfe_id, new_nazwa_projektu):
-    """Aktualizuje pojedynczy rekord w bazie danych."""
-    # Aktualizacja nazwy projektu
+# Uproszczona funkcja aktualizacji - bez logiki historii
+def update_record(cursor, det_id, new_nazwa_projektu):
+    """Aktualizuje nazwę projektu w tabeli WFELEMENTDETAILS."""
     cursor.execute(
         "UPDATE WFELEMENTDETAILS SET DET_Att4 = ? WHERE DET_ID = ?",
         new_nazwa_projektu,
         det_id
-    )
-    # Dodanie notatki do historii elementu
-    history_note = f"Zmieniono Nazwa projektu na: {new_nazwa_projektu}"
-    cursor.execute(
-        "UPDATE WFElements SET WFE_History = ISNULL(WFE_History, '') + CHAR(13) + CHAR(10) + ' ' + ? WHERE WFE_ID = ?",
-        history_note,
-        wfe_id
     )
 
 def process_projects(mode='test'):
@@ -75,13 +67,24 @@ def process_projects(mode='test'):
             return
 
         for row in rows:
-            if row.Nazwa_projektu and row.Nazwa_projektu.endswith(' hala B'):
-                new_nazwa_projektu = row.Nazwa_projektu + "1"
+            nazwa_projektu_raw = row.Nazwa_projektu
+            if not nazwa_projektu_raw:
+                continue
+
+            # Rozdzielenie ciągu znaków, aby uzyskać samą nazwę do sprawdzenia
+            display_name = nazwa_projektu_raw
+            if '#' in nazwa_projektu_raw:
+                display_name = nazwa_projektu_raw.split('#', 1)[1]
+
+            # Sprawdzenie, czy właściwa nazwa (po znaku #) kończy się na " hala B"
+            if display_name.strip().endswith('_hala B'):
+                # Modyfikacja polega na dodaniu "1" na końcu całego oryginalnego ciągu
+                new_nazwa_projektu = nazwa_projektu_raw + "1"
+
                 records_to_change.append({
                     "det_id": row.DET_ID,
-                    "wfe_id": row.DET_WFEID,
                     "numer_projektu": row.Numer_projektu,
-                    "old_nazwa": row.Nazwa_projektu,
+                    "old_nazwa": nazwa_projektu_raw,
                     "new_nazwa": new_nazwa_projektu
                 })
 
@@ -100,7 +103,7 @@ def process_projects(mode='test'):
             update_status = "Oczekuje (tryb testowy)"
             if mode == 'update':
                 try:
-                    update_record(cursor, record["det_id"], record["wfe_id"], record["new_nazwa"])
+                    update_record(cursor, record["det_id"], record["new_nazwa"])
                     update_status = "[bold green]Zaktualizowano[/bold green]"
                     updated_count += 1
                 except Exception as e:
@@ -124,12 +127,12 @@ def process_projects(mode='test'):
 
 
     except pyodbc.Error as ex:
-        sqlstate = ex.args[0]
-        console.print(f"Błąd połączenia z bazą danych: {sqlstate}", style="bold red")
+        console.print(f"Błąd bazy danych. SQLSTATE: {ex.args[0]}", style="bold red")
+        console.print(f"Pełny komunikat błędu: {ex}", style="bold red")
         if connection:
             connection.rollback()
     except Exception as e:
-        console.print(f"Wystąpił nieoczekiwany błąd: {e}", style="bold red")
+        console.print(f"Wystąpił nieoczekiwany błąd w skrypcie: {e}", style="bold red")
     finally:
         if connection:
             connection.close()
