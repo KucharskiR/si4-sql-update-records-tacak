@@ -1,19 +1,27 @@
 WITH JednostkaWiodaca AS (
     -- 1. Sprawdzenie, czy dla pracownika zdefiniowano jednostkę wiodącą w jego teczce
     SELECT
-        dbo.ClearWFElem(WFD_AttChoose11) AS UnitName,
+        CASE
+            WHEN CHARINDEX('[', dbo.ClearWFElem(WFD_AttChoose11)) > 0
+            THEN LTRIM(RTRIM(SUBSTRING(dbo.ClearWFElem(WFD_AttChoose11), 1, CHARINDEX('[', dbo.ClearWFElem(WFD_AttChoose11)) - 1)))
+            ELSE dbo.ClearWFElem(WFD_AttChoose11)
+        END AS UnitName,
         1 AS Priority -- Najwyższy priorytet
     FROM
         WFElements
     WHERE
         WFD_DTYPEID = 46 -- ID procesu 'Teczka Pracownika'
-        AND WFD_Signature = '#{Numer_teczki_pracownika}#' -- Zmienna Webcon: numer teczki
+        AND WFD_Signature = ? -- Zmienna Webcon: numer teczki
         AND WFD_AttChoose11 IS NOT NULL AND WFD_AttChoose11 <> ''
 ),
 JednostkaZDaty AS (
     -- 2. Jeśli brak jednostki wiodącej, wyszukanie jednostki na podstawie daty przypisania
     SELECT
-        Q1.UnitName,
+        CASE
+            WHEN CHARINDEX('[', Q1.UnitName) > 0
+            THEN LTRIM(RTRIM(SUBSTRING(Q1.UnitName, 1, CHARINDEX('[', Q1.UnitName) - 1)))
+            ELSE Q1.UnitName
+        END AS UnitName,
         2 AS Priority -- Niższy priorytet
     FROM (
         -- Podzapytanie oparte na [SO]_Pracownicy_Jednostki_Przelozeni.sql
@@ -31,10 +39,10 @@ JednostkaZDaty AS (
     ) AS Q1
     WHERE
         -- Powiązanie z ID pracownika na podstawie numeru teczki
-        Q1.PersonID = (SELECT WFD_ID FROM WFElements WHERE WFD_DTYPEID = 46 AND WFD_Signature = '#{Numer_teczki_pracownika}#')
+        Q1.PersonID = (SELECT WFD_ID FROM WFElements WHERE WFD_DTYPEID = 46 AND WFD_Signature = ?) -- Zmienna Webcon: numer teczki
         -- Sprawdzenie, czy podana data mieści się w okresie przypisania pracownika do jednostki
-        AND CAST('#{Data_dnia_roboczego}#' AS date) >= Q1.DateFrom
-        AND (Q1.DateTo IS NULL OR CAST('#{Data_dnia_roboczego}#' AS date) <= Q1.DateTo)
+        AND CAST(? AS date) >= Q1.DateFrom
+        AND (Q1.DateTo IS NULL OR CAST(? AS date) <= Q1.DateTo)
 ),
 WszystkieJednostki AS (
     -- 3. Połączenie wyników w jeden zbiór

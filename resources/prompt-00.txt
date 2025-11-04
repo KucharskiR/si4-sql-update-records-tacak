@@ -1,0 +1,1 @@
+na podstawie skryptu @lpp_b1_updater.py przygotuj nowy podobny skrypt który dla numerów projektu 3747_37 oraz 3747_38 zmieni w nazwie projektu ciąg znaków LPP na KAJ

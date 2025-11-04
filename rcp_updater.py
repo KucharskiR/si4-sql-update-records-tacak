@@ -65,7 +65,8 @@ def fetch_data_to_update(cursor, start_date, end_date):
         AND (
             WFD_AttText9 IS NULL OR WFD_AttText9 = '' OR
             WFD_AttText8 IS NULL OR WFD_AttText8 = '' OR
-            WFD_AttDecimal3 IS NULL
+            WFD_AttDecimal3 IS NULL OR
+            WFD_AttText9 LIKE '%KTP%'
         )
     """
     cursor.execute(query, start_date, end_date)
@@ -84,16 +85,19 @@ def get_new_values(cursor, employee_id, work_date, wfd_id):
 
     # Pobranie nowej jednostki organizacyjnej
     if unit_sql:
-        query = unit_sql.replace("#{Numer_teczki_pracownika}#", f"'{employee_id}'").replace("#{Data_dnia_roboczego}#", f"'{work_date}'")
-        cursor.execute(query)
+        # Użycie parametryzacji zapytań w celu uniknięcia błędów składni i SQL Injection
+        query = unit_sql.replace("#{Numer_teczki_pracownika}#", "?").replace("#{Data_dnia_roboczego}#", "?")
+        # Każdy plik SQL używa tych parametrów dwukrotnie
+        cursor.execute(query, employee_id, employee_id, work_date, work_date)
         result = cursor.fetchone()
         if result:
             new_unit = result[0]
 
     # Pobranie nowego kodu jednostki
     if unit_code_sql:
-        query = unit_code_sql.replace("#{Numer_teczki_pracownika}#", f"'{employee_id}'").replace("#{Data_dnia_roboczego}#", f"'{work_date}'")
-        cursor.execute(query)
+        # Użycie parametryzacji zapytań
+        query = unit_code_sql.replace("#{Numer_teczki_pracownika}#", "?").replace("#{Data_dnia_roboczego}#", "?")
+        cursor.execute(query, employee_id, employee_id, work_date, work_date)
         result = cursor.fetchone()
         if result:
             new_unit_code = result[0]

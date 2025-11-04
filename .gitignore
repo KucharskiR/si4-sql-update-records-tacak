@@ -8,3 +8,6 @@ venv/
 # Ignoruj pliki cache Pythona
 __pycache__/
 *.pyc
+
+# Ignoruj GEMINI
+GEMINI.md

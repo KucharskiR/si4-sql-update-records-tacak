@@ -1,16 +1,20 @@
-# Automatyzacja Aktualizacji Danych Projektowych w WEBCON BPS
+# Automatyzacja Aktualizacji Danych w WEBCON BPS
 
-Ten projekt zawiera dwa skrypty w języku Python, które służą do analizy i aktualizacji danych projektowych przechowywanych w bazie danych WEBCON BPS. Głównym celem jest automatyczne parsowanie i uzupełnianie pól `Numer tematu`, `Kod zadania` oraz `Klient (skrót)` na podstawie informacji zawartych w polach `Numer projektu` i `Nazwa projektu`.
+Ten projekt zawiera skrypty w języku Python, które służą do analizy i aktualizacji danych przechowywanych w bazie danych WEBCON BPS.
 
 ## Skrypty
 
 1.  **`main.py`**
-    *   **Cel:** Analiza i wizualizacja danych (tylko do odczytu).
-    *   **Funkcjonalność:** Łączy się z bazą danych, pobiera dane projektowe, przetwarza je w pamięci (bez zapisu do bazy) i wyświetla w czytelnej, kolorowej tabeli w terminalu. Idealny do weryfikacji, które projekty wymagają aktualizacji. Posiada opcję filtrowania, aby pokazać tylko rekordy z brakującymi danymi.
+    *   **Cel:** Analiza i wizualizacja danych projektowych (tylko do odczytu).
+    *   **Funkcjonalność:** Parsuje pola `Numer projektu` i `Nazwa projektu`, aby uzupełnić `Numer tematu`, `Kod zadania` oraz `Klient (skrót)`. Działa w trybie tylko do odczytu, pokazując potencjalne zmiany.
 
 2.  **`main_updater.py`**
-    *   **Cel:** Aktualizacja danych w bazie.
-    *   **Funkcjonalność:** Rozszerza możliwości `main.py` o funkcję zapisu przetworzonych danych z powrotem do bazy. Skrypt oferuje trzy tryby pracy oraz opcję filtrowania, aby operacje dotyczyły tylko rekordów z brakującymi danymi.
+    *   **Cel:** Aktualizacja danych projektowych w bazie.
+    *   **Funkcjonalność:** Rozszerza możliwości `main.py` o funkcję zapisu przetworzonych danych projektu z powrotem do bazy.
+
+3.  **`rcp_updater.py`**
+    *   **Cel:** Aktualizacja wpisów Rejestracji Czasu Pracy (RCP).
+    *   **Funkcjonalność:** Dla wpisów RCP w podanym zakresie dat, skrypt uzupełnia brakujące pola: `Jednostka organizacyjna`, `Kod jednostki organizacyjnej` oraz `Łączny czas`. Korzysta ze złożonej logiki SQL do odnalezienia prawidłowych danych na podstawie informacji o pracowniku i dacie wpisu.
 
 ---
 
@@ -66,49 +70,52 @@ DB_PASSWORD=twoje_haslo_sql
 
 ## Użycie
 
-**1. Analiza danych (bez zapisu)**
+**1. Analiza danych projektu (bez zapisu)**
 
-Aby zobaczyć, które rekordy zostaną przetworzone, uruchom skrypt `main.py`:
+Aby zobaczyć, które rekordy projektów zostaną przetworzone, uruchom skrypt `main.py`:
 ```bash
 python main.py
 ```
 
-*   **Analiza tylko rekordów z brakami**
-    Aby wyświetlić tylko te rekordy, w których brakuje `Kodu zadania`, `Numeru tematu` lub `Klienta (skrót)`:
-    ```bash
-    python main.py --only-missing
-    ```
+**2. Aktualizacja danych projektu**
 
-**2. Aktualizacja danych**
-
-Skrypt `main_updater.py` służy do zapisu zmian w bazie. Uruchamiaj go z odpowiednimi flagami:
+Skrypt `main_updater.py` służy do zapisu zmian w danych projektowych.
 
 *   **Tryb testowy (domyślny, "na sucho")**
-    Wyświetla, co zostałoby zaktualizowane, ale nie dokonuje żadnych zmian w bazie. Działa na wszystkich rekordach.
+    Wyświetla, co zostałoby zaktualizowane, ale nie dokonuje żadnych zmian w bazie.
     ```bash
     python main_updater.py
     ```
 
-*   **Tryb testowy dla rekordów z brakami**
-    Działa jak tryb testowy, ale pokazuje zmiany tylko dla rekordów z brakującymi polami.
-    ```bash
-    python main_updater.py --only-missing
-    ```
-
-*   **Aktualizacja jednego rekordu (do testów zapisu)**
-    Aktualizuje tylko pierwszy napotkany rekord, który wymaga zmian, a następnie kończy pracę. Można połączyć z `--only-missing`, aby działać na pierwszym rekordzie z brakami.
-    ```bash
-    python main_updater.py --single
-    python main_updater.py --only-missing --single
-    ```
-
-*   **Pełna aktualizacja wszystkich rekordów**
-    Aktualizuje wszystkie rekordy, które tego wymagają. Ze względów bezpieczeństwa, przed uruchomieniem **poprosi o ostateczne potwierdzenie**. Można połączyć z `--only-missing`, aby zaktualizować wszystkie rekordy z brakami.
+*   **Pełna aktualizacja wszystkich rekordów projektu**
+    Aktualizuje wszystkie rekordy projektów, które tego wymagają. Przed uruchomieniem **poprosi o ostateczne potwierdzenie**.
     ```bash
     python main_updater.py --update-all
-    python main_updater.py --only-missing --update-all
     ```
-    Po uruchomieniu tego polecenia, wpisz `tak` i naciśnij Enter, aby rozpocząć masową aktualizację.
+
+**3. Aktualizacja wpisów RCP (`rcp_updater.py`)**
+
+Ten skrypt wymaga podania zakresu dat, dla którego mają zostać zaktualizowane wpisy RCP.
+
+*   **Tryb testowy (domyślny, "na sucho")**
+    Wyświetla w tabeli, które wpisy RCP i jakie dane w nich zostaną zaktualizowane. Nie dokonuje żadnych zmian w bazie.
+    ```bash
+    python rcp_updater.py --start-date DD.MM.RRRR --end-date DD.MM.RRRR
+    ```
+    *Przykład:*
+    ```bash
+    python rcp_updater.py --start-date 01.11.2024 --end-date 30.11.2024
+    ```
+
+*   **Pełna aktualizacja wpisów RCP**
+    Aktualizuje wszystkie wpisy RCP w podanym zakresie dat. Ze względów bezpieczeństwa, przed uruchomieniem **poprosi o ostateczne potwierdzenie (y/n)**.
+    ```bash
+    python rcp_updater.py --start-date DD.MM.RRRR --end-date DD.MM.RRRR --update
+    ```
+    *Przykład:*
+    ```bash
+    python rcp_updater.py --start-date 01.11.2024 --end-date 30.11.2024 --update
+    ```
 
 ---
 
@@ -127,7 +134,7 @@ pip install -r requirements.txt
 
 Aby rozpocząć sesję debugowania, wykonaj dwa proste kroki:
 
-*   **Zaimportuj bibliotekę** na początku pliku, który chcesz debugować (`main.py` lub `main_updater.py`):
+*   **Zaimportuj bibliotekę** na początku pliku, który chcesz debugować:
     ```python
     import ipdb
     ```
@@ -138,14 +145,6 @@ Aby rozpocząć sesję debugowania, wykonaj dwa proste kroki:
     ```
 
 Po uruchomieniu skryptu jego wykonanie zatrzyma się w miejscu, gdzie wstawiłeś `set_trace()`, a Ty uzyskasz dostęp do interaktywnej konsoli debuggera.
-
-**Podstawowe komendy `ipdb`:**
-
-*   `n` (next) – wykonaj następną linię kodu.
-*   `c` (continue) – kontynuuj normalne wykonywanie skryptu aż do następnego punktu przerwania.
-*   `q` (quit) – zakończ sesję debugowania i wyjdź ze skryptu.
-*   `p <zmienna>` (print) – wyświetl wartość podanej zmiennej (np. `p row`).
-*   `l` (list) – pokaż, w którym miejscu w kodzie aktualnie się znajdujesz.
 
 ---
 

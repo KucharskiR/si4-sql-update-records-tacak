@@ -14,7 +14,7 @@ WITH JednostkaWiodaca AS (
     ) AS jednostki ON jednostki.WFD_ID = dbo.ClearWFElemID(teczka_pracownika.WFD_AttChoose11)
     WHERE
         teczka_pracownika.WFD_DTYPEID = 46 -- ID procesu 'Teczka Pracownika'
-        AND teczka_pracownika.WFD_Signature = '#{Numer_teczki_pracownika}#' -- Zmienna Webcon: numer teczki
+        AND teczka_pracownika.WFD_Signature = #{Numer_teczki_pracownika}# -- Zmienna Webcon: numer teczki
         AND teczka_pracownika.WFD_AttChoose11 IS NOT NULL AND teczka_pracownika.WFD_AttChoose11 <> ''
 ),
 JednostkaZDaty AS (
@@ -38,10 +38,10 @@ JednostkaZDaty AS (
     ) AS Q1
     WHERE
         -- Powiązanie z ID pracownika na podstawie numeru teczki
-        Q1.PersonID = (SELECT WFD_ID FROM WFElements WHERE WFD_DTYPEID = 46 AND WFD_Signature = '#{Numer_teczki_pracownika}#')
+        Q1.PersonID = (SELECT WFD_ID FROM WFElements WHERE WFD_DTYPEID = 46 AND WFD_Signature = #{Numer_teczki_pracownika}#)
         -- Sprawdzenie, czy podana data mieści się w okresie przypisania pracownika do jednostki
-        AND CAST('#{Data_dnia_roboczego}#' AS date) >= Q1.DateFrom
-        AND (Q1.DateTo IS NULL OR CAST('#{Data_dnia_roboczego}#' AS date) <= Q1.DateTo)
+        AND CAST(#{Data_dnia_roboczego}# AS date) >= Q1.DateFrom
+        AND (Q1.DateTo IS NULL OR CAST(#{Data_dnia_roboczego}# AS date) <= Q1.DateTo)
 ),
 WszystkieJednostki AS (
     -- 3. Połączenie wyników w jeden zbiór
