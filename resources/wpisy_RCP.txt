@@ -1,0 +1,19 @@
+Zapytanie uzyskujące listę wpisów RCP:
+    SELECT DISTINCT
+    WFD_ID, -- WFD_ID jest używane do uzyskania łącznego czasu z pliku laczny_czas.txt
+    WFD_AttText7 as 'ID Pracownika',
+    WFD_AttText9 as 'Jednostka organizacyjna',
+    WFD_AttText8 as 'Kod jednostki organizacyjnej',
+    WFD_AttDateTime10 as 'Dzień roboczy',
+    WFD_AttDecimal3 as 'Łączny czas'
+    FROM WFElements
+    WHERE
+    WFD_DTYPEID = '56'
+
+Przykład wyników uzyskiwanych przez zapytanie:
+WFD_ID	ID Pracownika	Jednostka organizacyjna	Kod jednostki organizacyjnej	Dzień roboczy	Łączny czas
+9516	KTP/00172	NULL	NULL	2024-11-04 00:00:00.000	NULL
+9517	KTP/00172	NULL	NULL	2024-11-05 00:00:00.000	NULL
+9520	KTP/00172	NULL	NULL	2024-11-18 00:00:00.000	NULL
+9521	KTP/00143	NULL	NULL	2024-12-02 00:00:00.000	NULL
+9522	KTP/00143	NULL	NULL	2024-12-03 00:00:00.000	NULL
