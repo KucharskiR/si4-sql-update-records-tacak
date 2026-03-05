@@ -35,9 +35,9 @@ WHERE
 def get_connection_string():
     """Tworzy connection string w zależności od metody uwierzytelniania."""
     if DB_USER and DB_PASSWORD:
-        return f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={DB_SERVER};DATABASE={DB_NAME};UID={DB_USER};PWD={DB_PASSWORD};"
+        return f"DRIVER={{ODBC Driver 18 for SQL Server}};SERVER={DB_SERVER};DATABASE={DB_NAME};UID={DB_USER};PWD={DB_PASSWORD};TrustServerCertificate=yes;"
     else:
-        return f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={DB_SERVER};DATABASE={DB_NAME};Trusted_Connection=yes;"
+        return f"DRIVER={{ODBC Driver 18 for SQL Server}};SERVER={DB_SERVER};DATABASE={DB_NAME};Trusted_Connection=yes;TrustServerCertificate=yes;"
 
 def fetch_projects(only_missing=False):
     """Nawiązuje połączenie z bazą danych, pobiera, przetwarza i wyświetla projekty."""
