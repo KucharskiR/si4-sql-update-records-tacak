@@ -1,0 +1,7 @@
+Zapytanie zwracające sumę (łączny czas) pracy dla danego wpisu RCP od WFD_ID numer 14867:
+    SELECT
+    SUM(DET_Value1) as 'Łączny czas'
+    FROM WFElementDetails	
+    WHERE
+    DET_WFDID = '14867' -- numer 14867 to kolumna WFD_ID z wpisu RCP. Aby uzyskać łączny czas dla innego wpisu RCP trzeba podmienić ten numer na odpowiedni WFD_ID
+    --and DET_WFCONID = '46'

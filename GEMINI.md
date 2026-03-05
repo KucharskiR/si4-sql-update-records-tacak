@@ -10,6 +10,7 @@ The project uses `pyodbc` for database connectivity, `python-dotenv` for managin
 
 *   `main.py`: A read-only script for analysis. It fetches and processes data in memory, then displays a report of potential changes in a color-coded table without modifying the database. This is the primary tool for safely previewing the script's logic.
 *   `main_updater.py`: The main script for performing database updates. It includes safety features like different execution modes (`test`, `single`, `update-all`).
+*   `rcp_updater.py`: A script to update Time and Attendance (RCP) entries. It populates missing organizational unit data and total work time for entries within a specified date range.
 *   `requirements.txt`: Lists the necessary Python packages (`pyodbc`, `python-dotenv`, `rich`, `ipdb`).
 *   `.env` (to be created by user): A critical configuration file for storing database connection details (server, database name, credentials). This file is git-ignored.
 
@@ -95,3 +96,27 @@ The main challenge was correctly interpreting the data stored in the `WFELEMENTD
 ### Final Script
 
 The resulting script, `lpp_b1_updater.py`, includes a test mode (default) and an update mode (`--update`) and correctly handles the specific data structures of the WEBCON BPS database.
+
+---
+
+## RCP Data Updater (`rcp_updater.py`)
+
+This script was created to automate the process of filling in missing data for Time and Attendance (RCP) entries (`WFElements` with `WFD_DTYPEID = 56`).
+
+### Goal
+
+For RCP entries within a user-specified date range, the script fetches and populates three fields if they are empty:
+1.  `Jednostka organizacyjna` (WFD_AttText9)
+2.  `Kod jednostki organizacyjnej` (WFD_AttText8)
+3.  `Łączny czas` (WFD_AttDecimal3)
+
+### Logic & Data Sources
+
+*   **Date Range:** The script requires `--start-date` and `--end-date` arguments to define the processing window.
+*   **Unit/Unit Code:** To find the correct organizational unit and its code, the script executes complex SQL queries stored in `resources/get_employee_unit.sql` and `resources/get_employee_unit_code.sql`. These queries determine the correct unit based on the employee's primary unit or their assignment on a specific date.
+*   **Total Time:** The total work time is calculated by summing `DET_Value1` from the `WFElementDetails` table for the given RCP entry's `WFD_ID`.
+
+### Execution Modes
+
+*   **Dry Run (Default):** When run without additional flags, the script connects to the database, analyzes the data, and displays a `rich` table of all the changes it *would* make, without writing anything.
+*   **Update Mode:** When run with the `--update` flag, the script first displays the planned changes and then asks for a final `y/n` confirmation before executing the `UPDATE` statements on the database.
