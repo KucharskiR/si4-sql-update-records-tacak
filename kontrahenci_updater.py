@@ -20,7 +20,7 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 # Ścieżka do pliku CSV z danymi kontrahentów
-CSV_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dane_kontrahenci", "kontrahenci_mapped.csv")
+CSV_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dane_kontrahenci", "kontrahenci_mapped_PROD.csv")
 
 # Ścieżka do pliku SQL z zapytaniem pobierającym kontrahentów z bazy
 SQL_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sql", "sql_kontrahenci.sql")
@@ -80,8 +80,6 @@ def load_csv_data(csv_path):
 
             if normalized in csv_data:
                 duplicate_count += 1
-                # Zachowaj pierwszy wpis — duplikaty ignorujemy
-                continue
 
             csv_data[normalized] = {
                 "nazwa": row.get("Nazwa kontrahenta", "").strip(),
@@ -96,7 +94,7 @@ def load_csv_data(csv_path):
     if skipped_count:
         console.print(f"Pominięto {skipped_count} rekordów bez NIP.", style="yellow")
     if duplicate_count:
-        console.print(f"Pominięto {duplicate_count} duplikatów NIP (zachowano pierwszy wpis).", style="yellow")
+        console.print(f"Nadpisano {duplicate_count} duplikatów NIP (zachowano ostatni wpis).", style="yellow")
 
     return csv_data
 
@@ -225,7 +223,7 @@ def process_kontrahenci(mode='test'):
         table.add_column("Status", style="yellow", width=20)
 
         if mode in ('update', 'single'):
-            total = 5 if mode == 'single' else len(records_to_change)
+            total = 30 if mode == 'single' else len(records_to_change)
             with Progress() as update_progress:
                 update_task = update_progress.add_task("Aktualizacja rekordów...", total=total)
                 for record in records_to_change:
@@ -246,7 +244,7 @@ def process_kontrahenci(mode='test'):
                         update_status
                     )
 
-                    if mode == 'single' and updated_count >= 5:
+                    if mode == 'single' and updated_count >= 30:
                         break
         else:
             for record in records_to_change:
@@ -265,7 +263,7 @@ def process_kontrahenci(mode='test'):
             console.print(f"Zakończono. Zaktualizowano {updated_count} rekordów.", style="bold green")
         elif mode == 'single':
             connection.commit()
-            console.print(f"Tryb testowy (single). Zaktualizowano {updated_count} z maks. 5 rekordów.", style="bold green")
+            console.print(f"Tryb testowy (single). Zaktualizowano {updated_count} z maks. 30 rekordów.", style="bold green")
         else:
             console.print(f"Tryb testowy zakończony. {len(records_to_change)} rekordów zostałoby zaktualizowanych.", style="bold yellow")
 
@@ -294,7 +292,7 @@ if __name__ == "__main__":
     mode_group.add_argument(
         "--single",
         action="store_true",
-        help="Aktualizuj tylko pierwsze 5 pasujących rekordów (do testów zapisu)."
+        help="Aktualizuj tylko pierwsze 30 pasujących rekordów (do testów zapisu)."
     )
     mode_group.add_argument(
         "--update",
@@ -307,7 +305,7 @@ if __name__ == "__main__":
     mode = 'test'
     if args.single:
         mode = 'single'
-        console.print("UWAGA: Ta operacja zaktualizuje do 5 rekordów kontrahentów w bazie danych.", style="bold yellow")
+        console.print("UWAGA: Ta operacja zaktualizuje do 30 rekordów kontrahentów w bazie danych.", style="bold yellow")
         if input("Czy na pewno chcesz kontynuować? (tak/nie): ").lower() != 'tak':
             console.print("Operacja anulowana przez użytkownika.", style="bold red")
             exit()
