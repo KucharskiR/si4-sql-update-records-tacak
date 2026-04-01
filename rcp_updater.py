@@ -35,10 +35,10 @@ def get_db_connection():
     try:
         if db_user and db_password:
             # SQL Server Authentication
-            conn_str = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={db_server};DATABASE={db_name};UID={db_user};PWD={db_password}"
+            conn_str = f"DRIVER={{ODBC Driver 18 for SQL Server}};SERVER={db_server};DATABASE={db_name};UID={db_user};PWD={db_password};TrustServerCertificate=yes;"
         else:
             # Windows Authentication
-            conn_str = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={db_server};DATABASE={db_name};Trusted_Connection=yes;"
+            conn_str = f"DRIVER={{ODBC Driver 18 for SQL Server}};SERVER={db_server};DATABASE={db_name};Trusted_Connection=yes;TrustServerCertificate=yes;"
         
         return pyodbc.connect(conn_str)
     except pyodbc.Error as ex:
