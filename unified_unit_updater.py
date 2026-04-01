@@ -122,6 +122,11 @@ def process_unified_unit(mode="test"):
 
                 # Zakładamy nowe wartości na podstawie wymagań
                 nowe_jo_zglaszajacego = nazwa_jednostki
+
+                # Jeśli nie ma "Nazwa jednostki", a "JO zgłaszającego" ma już wartość, nie nadpisuj
+                if not nazwa_jednostki and aktualne_jo_zglaszajacego:
+                    nowe_jo_zglaszajacego = aktualne_jo_zglaszajacego
+
                 nowe_jo_prowadzaca = (
                     nowe_jo_zglaszajacego  # JO prowadząca na podstawie JO zgłaszającego
                 )
