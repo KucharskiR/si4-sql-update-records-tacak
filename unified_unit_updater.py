@@ -135,49 +135,16 @@ def process_unified_unit(mode="test"):
                     "jo_zglaszajacego": "",
                     "jo_prowadzaca": "",
                     "przypisani": "",
-                    "prowadzacy": ""
+                    "prowadzacy": "",
                 }
 
                 # Sprawdzamy co trzeba zaktualizować
                 # JO zgłaszającego
                 if aktualne_jo_zglaszajacego != nowe_jo_zglaszajacego:
                     updates["WFD_AttText6"] = nowe_jo_zglaszajacego
-                    columns_info["jo_zglaszajacego"] = f"[red]{aktualne_jo_zglaszajacego}[/red]\n-> [green]{nowe_jo_zglaszajacego}[/green]"
-                else:
-                    columns_info["jo_zglaszajacego"] = f"[dim]{aktualne_jo_zglaszajacego}[/dim]"
-
-                # JO prowadząca
-                if aktualna_jo_prowadzaca != nowe_jo_prowadzaca:
-                    updates["WFD_AttChoose12"] = nowe_jo_prowadzaca
-                    columns_info["jo_prowadzaca"] = f"[red]{aktualna_jo_prowadzaca}[/red]\n-> [green]{nowe_jo_prowadzaca}[/green]"
-                else:
-                    columns_info["jo_prowadzaca"] = f"[dim]{aktualna_jo_prowadzaca}[/dim]"
-
-                # Przypisani
-                if aktualni_przypisani != nowy_przypisani:
-                    updates["WFD_AttChoose4"] = nowy_przypisani
-                    columns_info["przypisani"] = f"[red]{aktualni_przypisani}[/red]\n-> [green]{nowy_przypisani}[/green]"
-                else:
-                    columns_info["przypisani"] = f"[dim]{aktualni_przypisani}[/dim]"
-
-                # Prowadzący
-                if aktualny_prowadzacy != nowy_prowadzacy:
-                    updates["WFD_AttChoose3"] = nowy_prowadzacy
-                    columns_info["prowadzacy"] = f"[red]{aktualny_prowadzacy}[/red]\n-> [green]{nowy_prowadzacy}[/green]"
-                else:
-                    columns_info["prowadzacy"] = f"[dim]{aktualny_prowadzacy}[/dim]"
-
-                if not updates:
-                    no_changes_count += 1
-                    continue
-
-                records_to_change.append(
-                    {
-                        "wfd_signature": db_row.WFD_Signature,
-                        "updates": updates,
-                        "columns_info": columns_info,
-                    }
-                )
+                    columns_info["jo_zglaszajacego"] = (
+                        f"[red]{aktualne_jo_zglaszajacego}[/red]\n-> [green]{nowe_jo_zglaszajacego}[/green]"
+                    )
                 else:
                     columns_info["jo_zglaszajacego"] = (
                         f"[dim]{aktualne_jo_zglaszajacego}[/dim]"
@@ -268,7 +235,7 @@ def process_unified_unit(mode="test"):
                         update_status = f"[bold red]Błąd: {e}[/bold red]"
 
                     update_progress.advance(update_task)
-                    
+
                     ci = record["columns_info"]
                     table.add_row(
                         str(record["wfd_signature"]),
