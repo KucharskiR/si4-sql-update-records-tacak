@@ -60,7 +60,7 @@ def update_record(cursor, wfd_signature, updates):
     cursor.execute(query, tuple(params))
 
 
-def process_unified_unit(mode="test"):
+def process_unified_unit(mode="test", target_signature=None):
     """Nawiązuje połączenie z bazą danych, pobiera dane z zapytania i opcjonalnie aktualizuje rekordy."""
     connection = None
     updated_count = 0
@@ -82,7 +82,13 @@ def process_unified_unit(mode="test"):
         cursor = connection.cursor()
 
         console.print("Pobieranie danych z bazy...", style="bold blue")
-        cursor.execute(sql_query)
+        if target_signature:
+            # Używamy REPLACE, żeby usunąć z końcówki ';' jeżeli jest, żeby bezpiecznie dokleić AND
+            safe_query = sql_query.rstrip().rstrip(";") + " AND D63.WFD_Signature = ?;"
+            cursor.execute(safe_query, (target_signature,))
+        else:
+            cursor.execute(sql_query)
+
         db_rows = cursor.fetchall()
 
         if not db_rows:
@@ -218,7 +224,7 @@ def process_unified_unit(mode="test"):
         table.add_column("Prowadzący", width=25)
         table.add_column("Status", style="yellow", width=15)
 
-        if mode in ("update", "single"):
+        if mode in ("update", "single", "update_signature"):
             total = 30 if mode == "single" else len(records_to_change)
             with Progress() as update_progress:
                 update_task = update_progress.add_task(
@@ -262,7 +268,7 @@ def process_unified_unit(mode="test"):
 
         console.print(table)
 
-        if mode == "update":
+        if mode in ("update", "update_signature"):
             connection.commit()
             console.print(
                 f"Zakończono. Zaktualizowano {updated_count} rekordów.",
@@ -317,10 +323,24 @@ if __name__ == "__main__":
         action="store_true",
         help="Aktualizuj WSZYSTKIE pasujące rekordy w bazie danych.",
     )
+    mode_group.add_argument(
+        "--update-signature",
+        type=str,
+        help="Aktualizuj tylko jeden konkretny rekord o podanej Sygnaturze.",
+    )
+
+    # Argument filtrujący (działa niezależnie od trybu, np. dla testów jednego wpisu)
+    parser.add_argument(
+        "--signature",
+        type=str,
+        help="Ogranicz działanie skryptu (nawet w trybie testowym) do konkretnej Sygnatury.",
+    )
 
     args = parser.parse_args()
 
     mode = "test"
+    target_signature = args.signature
+
     if args.single:
         mode = "single"
         console.print(
@@ -339,5 +359,15 @@ if __name__ == "__main__":
         if input("Czy na pewno chcesz kontynuować? (tak/nie): ").lower() != "tak":
             console.print("Operacja anulowana przez użytkownika.", style="bold red")
             exit()
+    elif args.update_signature:
+        mode = "update_signature"
+        target_signature = args.update_signature
+        console.print(
+            f"UWAGA: Ta operacja zaktualizuje wpis o sygnaturze '{target_signature}'.",
+            style="bold yellow",
+        )
+        if input("Czy na pewno chcesz kontynuować? (tak/nie): ").lower() != "tak":
+            console.print("Operacja anulowana przez użytkownika.", style="bold red")
+            exit()
 
-    process_unified_unit(mode=mode)
+    process_unified_unit(mode=mode, target_signature=target_signature)
