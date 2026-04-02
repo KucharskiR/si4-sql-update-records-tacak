@@ -112,7 +112,19 @@ def process_unified_unit(mode="test", target_signature=None, limit_count=30):
             for db_row in db_rows:
                 progress.advance(task)
 
+                # Warunek na przedział czasowy: "Data utworzenia projektu" w okresie ["Data od" - "Data do"]
+                data_od = getattr(db_row, "Data od", None)
+                data_do = getattr(db_row, "Data do", None)
+                data_utworzenia = getattr(db_row, "Data utworzenia projektu", None)
+
+                if data_utworzenia:
+                    if data_od and data_utworzenia < data_od:
+                        continue
+                    if data_do and data_utworzenia > data_do:
+                        continue
+
                 # Deduplikacja: zabezpieczenie przed zwróceniem wielu wierszy dla tej samej sygnatury (np. Pracownik i Przełożony)
+                # Musi być umieszczone PO odrzuceniu niepoprawnych przedziałów datowych
                 if db_row.WFD_Signature in processed_signatures:
                     continue
                 processed_signatures.add(db_row.WFD_Signature)
