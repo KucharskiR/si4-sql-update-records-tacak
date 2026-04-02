@@ -11,7 +11,7 @@ SELECT
     D78_T.WFD_AttText1 AS 'Nazwa jednostki',
     DET73_T.DET_Att2 AS 'Data od',
     DET73_T.DET_Att3 AS 'Data do',
-    DET73_T.DET_TSInsert AS 'Data utworzenia jednostki'
+    D63.WFD_TSInsert AS 'Data utworzenia projektu'
 FROM
     WFElements D63
 JOIN

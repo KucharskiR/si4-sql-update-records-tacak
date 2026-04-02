@@ -5,6 +5,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.progress import Progress
 import argparse
+from datetime import datetime
 
 # Załadowanie zmiennych środowiskowych
 load_dotenv()
@@ -45,6 +46,31 @@ def get_sql_from_file(file_path):
     """Wczytuje zapytanie SQL z pliku."""
     with open(file_path, "r", encoding="utf-8") as f:
         return f.read()
+
+
+def parse_date(date_val):
+    """Próbuje bezpiecznie przekształcić string/datetime do obiektu daty w celach porównawczych."""
+    if not date_val:
+        return None
+
+    if isinstance(date_val, datetime):
+        return date_val.date()
+
+    if isinstance(date_val, str):
+        date_str = date_val.strip()[:10]
+        if not date_str:
+            return None
+        try:
+            # Format standardowy ISO: YYYY-MM-DD
+            if "-" in date_str:
+                return datetime.strptime(date_str, "%Y-%m-%d").date()
+            # Format polski: DD.MM.YYYY
+            elif "." in date_str:
+                return datetime.strptime(date_str, "%d.%m.%Y").date()
+        except ValueError:
+            pass
+
+    return None
 
 
 def update_record(cursor, wfd_signature, updates):
@@ -132,9 +158,11 @@ def process_unified_unit(mode="test", target_signature=None, limit_count=30):
                 # Szukamy prawidłowej "Nazwa jednostki" analizując przedziały czasowe we wszystkich wierszach
                 valid_nazwa_jednostki = ""
                 for row in rows:
-                    data_od = getattr(row, "Data od", None)
-                    data_do = getattr(row, "Data do", None)
-                    data_utworzenia = getattr(row, "Data utworzenia projektu", None)
+                    data_od = parse_date(getattr(row, "Data od", None))
+                    data_do = parse_date(getattr(row, "Data do", None))
+                    data_utworzenia = parse_date(
+                        getattr(row, "Data utworzenia projektu", None)
+                    )
 
                     is_valid = True
                     if data_utworzenia:
