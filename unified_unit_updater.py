@@ -102,42 +102,127 @@ def process_unified_unit(mode="test", target_signature=None, limit_count=30):
         )
 
         # 3. Analiza danych i przygotowanie listy aktualizacji
-        matched_count = len(db_rows)
+        from collections import defaultdict
+        
+        grouped_rows = defaultdict(list)
+        for row in db_rows:
+            grouped_rows[row.WFD_Signature].append(row)
+
+        matched_count = len(grouped_rows)
         no_changes_count = 0
-        processed_signatures = set()
 
         with Progress() as progress:
-            task = progress.add_task("Analiza danych...", total=len(db_rows))
+            task = progress.add_task("Analiza danych...", total=len(grouped_rows))
 
-            for db_row in db_rows:
+            for signature, rows in grouped_rows.items():
                 progress.advance(task)
 
-                # Warunek na przedział czasowy: "Data utworzenia projektu" w okresie ["Data od" - "Data do"]
-                data_od = getattr(db_row, "Data od", None)
-                data_do = getattr(db_row, "Data do", None)
-                data_utworzenia = getattr(db_row, "Data utworzenia projektu", None)
+                base_row = rows[0]
+                zglaszajacy_smartptr = getattr(base_row, "Zgłaszający SmartPTR", "") or ""
 
-                if data_utworzenia:
-                    if data_od and data_utworzenia < data_od:
-                        continue
-                    if data_do and data_utworzenia > data_do:
-                        continue
+                aktualne_jo_zglaszajacego = getattr(base_row, "JO zgłaszjącego (SmartPTR)", "") or ""
+                aktualna_jo_prowadzaca = getattr(base_row, "JO prowadząca", "") or ""
+                aktualny_prowadzacy = getattr(base_row, "Prowadzący", "") or ""
+                aktualni_przypisani = getattr(base_row, "Przypisani", "") or ""
 
-                # Deduplikacja: zabezpieczenie przed zwróceniem wielu wierszy dla tej samej sygnatury (np. Pracownik i Przełożony)
-                # Musi być umieszczone PO odrzuceniu niepoprawnych przedziałów datowych
-                if db_row.WFD_Signature in processed_signatures:
-                    continue
-                processed_signatures.add(db_row.WFD_Signature)
+                # Szukamy prawidłowej "Nazwa jednostki" analizując przedziały czasowe we wszystkich wierszach
+                valid_nazwa_jednostki = ""
+                for row in rows:
+                    data_od = getattr(row, "Data od", None)
+                    data_do = getattr(row, "Data do", None)
+                    data_utworzenia = getattr(row, "Data utworzenia projektu", None)
+                    
+                    is_valid = True
+                    if data_utworzenia:
+                        if data_od and data_utworzenia < data_od:
+                            is_valid = False
+                        if data_do and data_utworzenia > data_do:
+                            is_valid = False
+                            
+                    if is_valid:
+                        nazwa = getattr(row, "Nazwa jednostki", "") or ""
+                        if nazwa:
+                            valid_nazwa_jednostki = nazwa
+                            break
 
                 updates = {}
-                # Pobranie danych ze źródła
-                nazwa_jednostki = getattr(db_row, "Nazwa jednostki", "") or ""
-                zglaszajacy_smartptr = getattr(db_row, "Zgłaszający SmartPTR", "") or ""
 
-                # Aktualne wartości w bazie
-                aktualne_jo_zglaszajacego = (
-                    getattr(db_row, "JO zgłaszjącego (SmartPTR)", "") or ""
+                # Zakładamy nowe wartości na podstawie wymagań
+                nowe_jo_zglaszajacego = valid_nazwa_jednostki
+
+                # Jeśli nie ma "Nazwa jednostki" z poprawnego przedziału dat, nie nadpisuj JO
+                if not valid_nazwa_jednostki and aktualne_jo_zglaszajacego:
+                    nowe_jo_zglaszajacego = aktualne_jo_zglaszajacego
+
+                nowe_jo_prowadzaca = (
+                    nowe_jo_zglaszajacego  # JO prowadząca na podstawie JO zgłaszającego
                 )
+                nowy_przypisani = zglaszajacy_smartptr
+                nowy_prowadzacy = zglaszajacy_smartptr
+
+                columns_info = {
+                    "jo_zglaszajacego": "",
+                    "jo_prowadzaca": "",
+                    "przypisani": "",
+                    "prowadzacy": "",
+                }
+
+                # Sprawdzamy co trzeba zaktualizować
+                # JO zgłaszającego
+                if aktualne_jo_zglaszajacego != nowe_jo_zglaszajacego:
+                    updates["WFD_AttText6"] = nowe_jo_zglaszajacego
+                    columns_info["jo_zglaszajacego"] = (
+                        f"[red]{aktualne_jo_zglaszajacego}[/red]\n-> [green]{nowe_jo_zglaszajacego}[/green]"
+                    )
+                else:
+                    columns_info["jo_zglaszajacego"] = (
+                        f"[dim]{aktualne_jo_zglaszajacego}[/dim]"
+                    )
+
+                # JO prowadząca
+                if aktualna_jo_prowadzaca != nowe_jo_prowadzaca:
+                    updates["WFD_AttChoose12"] = nowe_jo_prowadzaca
+                    columns_info["jo_prowadzaca"] = (
+                        f"[red]{aktualna_jo_prowadzaca}[/red]\n-> [green]{nowe_jo_prowadzaca}[/green]"
+                    )
+                else:
+                    columns_info["jo_prowadzaca"] = (
+                        f"[dim]{aktualna_jo_prowadzaca}[/dim]"
+                    )
+
+                # Przypisani
+                if aktualni_przypisani != nowy_przypisani:
+                    updates["WFD_AttChoose4"] = nowy_przypisani
+                    columns_info["przypisani"] = (
+                        f"[red]{aktualni_przypisani}[/red]\n-> [green]{nowy_przypisani}[/green]"
+                    )
+                else:
+                    columns_info["przypisani"] = f"[dim]{aktualni_przypisani}[/dim]"
+
+                # Prowadzący
+                if aktualny_prowadzacy != nowy_prowadzacy:
+                    updates["WFD_AttChoose3"] = nowy_prowadzacy
+                    columns_info["prowadzacy"] = (
+                        f"[red]{aktualny_prowadzacy}[/red]\n-> [green]{nowy_prowadzacy}[/green]"
+                    )
+                else:
+                    columns_info["prowadzacy"] = f"[dim]{aktualny_prowadzacy}[/dim]"
+
+                if not updates:
+                    no_changes_count += 1
+                    continue
+
+                records_to_change.append(
+                    {
+                        "wfd_signature": signature,
+                        "updates": updates,
+                        "columns_info": columns_info,
+                    }
+                )
+
+        console.print(
+            f"\nPrzeanalizowano {matched_count} unikalnych rekordów.", style="bold blue"
+        )
                 aktualna_jo_prowadzaca = getattr(db_row, "JO prowadząca", "") or ""
                 aktualny_prowadzacy = getattr(db_row, "Prowadzący", "") or ""
                 aktualni_przypisani = getattr(db_row, "Przypisani", "") or ""
