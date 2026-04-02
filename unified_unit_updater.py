@@ -173,8 +173,12 @@ def process_unified_unit(mode="test", target_signature=None, limit_count=30):
 
                     if is_valid:
                         nazwa = getattr(row, "Nazwa jednostki", "") or ""
+                        id_jednostki = getattr(row, "ID_Jednostki_Organizacyjnej", "")
                         if nazwa:
-                            valid_nazwa_jednostki = nazwa
+                            if id_jednostki is not None and str(id_jednostki).strip():
+                                valid_nazwa_jednostki = f"{id_jednostki}#{nazwa}"
+                            else:
+                                valid_nazwa_jednostki = nazwa
                             break
 
                 updates = {}
@@ -366,7 +370,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Aktualizuje dane jednostek i ról w WEBCON BPS na podstawie zapytania SQL.\n\n"
         "Aktualizowane pola:\n"
-        "- JO zgłaszającego = Nazwa jednostki\n"
+        "- JO zgłaszającego = ID_Jednostki#Nazwa jednostki\n"
         "- JO prowadząca = JO zgłaszającego\n"
         "- Przypisani = Zgłaszający (SmartPTR)\n"
         "- Prowadzący = Zgłaszający (SmartPTR)\n\n"
