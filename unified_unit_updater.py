@@ -103,7 +103,7 @@ def process_unified_unit(mode="test", target_signature=None, limit_count=30):
 
         # 3. Analiza danych i przygotowanie listy aktualizacji
         from collections import defaultdict
-        
+
         grouped_rows = defaultdict(list)
         for row in db_rows:
             grouped_rows[row.WFD_Signature].append(row)
@@ -118,9 +118,13 @@ def process_unified_unit(mode="test", target_signature=None, limit_count=30):
                 progress.advance(task)
 
                 base_row = rows[0]
-                zglaszajacy_smartptr = getattr(base_row, "Zgłaszający SmartPTR", "") or ""
+                zglaszajacy_smartptr = (
+                    getattr(base_row, "Zgłaszający SmartPTR", "") or ""
+                )
 
-                aktualne_jo_zglaszajacego = getattr(base_row, "JO zgłaszjącego (SmartPTR)", "") or ""
+                aktualne_jo_zglaszajacego = (
+                    getattr(base_row, "JO zgłaszjącego (SmartPTR)", "") or ""
+                )
                 aktualna_jo_prowadzaca = getattr(base_row, "JO prowadząca", "") or ""
                 aktualny_prowadzacy = getattr(base_row, "Prowadzący", "") or ""
                 aktualni_przypisani = getattr(base_row, "Przypisani", "") or ""
@@ -131,14 +135,14 @@ def process_unified_unit(mode="test", target_signature=None, limit_count=30):
                     data_od = getattr(row, "Data od", None)
                     data_do = getattr(row, "Data do", None)
                     data_utworzenia = getattr(row, "Data utworzenia projektu", None)
-                    
+
                     is_valid = True
                     if data_utworzenia:
                         if data_od and data_utworzenia < data_od:
                             is_valid = False
                         if data_do and data_utworzenia > data_do:
                             is_valid = False
-                            
+
                     if is_valid:
                         nazwa = getattr(row, "Nazwa jednostki", "") or ""
                         if nazwa:
@@ -220,87 +224,6 @@ def process_unified_unit(mode="test", target_signature=None, limit_count=30):
                     }
                 )
 
-        console.print(
-            f"\nPrzeanalizowano {matched_count} unikalnych rekordów.", style="bold blue"
-        )
-                aktualna_jo_prowadzaca = getattr(db_row, "JO prowadząca", "") or ""
-                aktualny_prowadzacy = getattr(db_row, "Prowadzący", "") or ""
-                aktualni_przypisani = getattr(db_row, "Przypisani", "") or ""
-
-                # Zakładamy nowe wartości na podstawie wymagań
-                nowe_jo_zglaszajacego = nazwa_jednostki
-
-                # Jeśli nie ma "Nazwa jednostki", a "JO zgłaszającego" ma już wartość, nie nadpisuj
-                if not nazwa_jednostki and aktualne_jo_zglaszajacego:
-                    nowe_jo_zglaszajacego = aktualne_jo_zglaszajacego
-
-                nowe_jo_prowadzaca = (
-                    nowe_jo_zglaszajacego  # JO prowadząca na podstawie JO zgłaszającego
-                )
-                nowy_przypisani = zglaszajacy_smartptr
-                nowy_prowadzacy = zglaszajacy_smartptr
-
-                columns_info = {
-                    "jo_zglaszajacego": "",
-                    "jo_prowadzaca": "",
-                    "przypisani": "",
-                    "prowadzacy": "",
-                }
-
-                # Sprawdzamy co trzeba zaktualizować
-                # JO zgłaszającego
-                if aktualne_jo_zglaszajacego != nowe_jo_zglaszajacego:
-                    updates["WFD_AttText6"] = nowe_jo_zglaszajacego
-                    columns_info["jo_zglaszajacego"] = (
-                        f"[red]{aktualne_jo_zglaszajacego}[/red]\n-> [green]{nowe_jo_zglaszajacego}[/green]"
-                    )
-                else:
-                    columns_info["jo_zglaszajacego"] = (
-                        f"[dim]{aktualne_jo_zglaszajacego}[/dim]"
-                    )
-
-                # JO prowadząca
-                if aktualna_jo_prowadzaca != nowe_jo_prowadzaca:
-                    updates["WFD_AttChoose12"] = nowe_jo_prowadzaca
-                    columns_info["jo_prowadzaca"] = (
-                        f"[red]{aktualna_jo_prowadzaca}[/red]\n-> [green]{nowe_jo_prowadzaca}[/green]"
-                    )
-                else:
-                    columns_info["jo_prowadzaca"] = (
-                        f"[dim]{aktualna_jo_prowadzaca}[/dim]"
-                    )
-
-                # Przypisani
-                if aktualni_przypisani != nowy_przypisani:
-                    updates["WFD_AttChoose4"] = nowy_przypisani
-                    columns_info["przypisani"] = (
-                        f"[red]{aktualni_przypisani}[/red]\n-> [green]{nowy_przypisani}[/green]"
-                    )
-                else:
-                    columns_info["przypisani"] = f"[dim]{aktualni_przypisani}[/dim]"
-
-                # Prowadzący
-                if aktualny_prowadzacy != nowy_prowadzacy:
-                    updates["WFD_AttChoose3"] = nowy_prowadzacy
-                    columns_info["prowadzacy"] = (
-                        f"[red]{aktualny_prowadzacy}[/red]\n-> [green]{nowy_prowadzacy}[/green]"
-                    )
-                else:
-                    columns_info["prowadzacy"] = f"[dim]{aktualny_prowadzacy}[/dim]"
-
-                if not updates:
-                    no_changes_count += 1
-                    continue
-
-                records_to_change.append(
-                    {
-                        "wfd_signature": db_row.WFD_Signature,
-                        "updates": updates,
-                        "columns_info": columns_info,
-                    }
-                )
-
-        matched_count = len(processed_signatures)
         console.print(
             f"\nPrzeanalizowano {matched_count} unikalnych rekordów.", style="bold blue"
         )
