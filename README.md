@@ -16,6 +16,10 @@ Ten projekt zawiera skrypty w języku Python, które służą do analizy i aktua
     *   **Cel:** Aktualizacja wpisów Rejestracji Czasu Pracy (RCP).
     *   **Funkcjonalność:** Dla wpisów RCP w podanym zakresie dat, skrypt uzupełnia brakujące pola: `Jednostka organizacyjna`, `Kod jednostki organizacyjnej` oraz `Łączny czas`. Korzysta ze złożonej logiki SQL do odnalezienia prawidłowych danych na podstawie informacji o pracowniku i dacie wpisu.
 
+4.  **`unified_unit_updater.py`**
+    *   **Cel:** Ujednolicona aktualizacja ról (Prowadzący, Przypisani) i Jednostek Organizacyjnych dokumentów w bazie.
+    *   **Funkcjonalność:** Opiera się o zdefiniowane w SQL (`sql/SQL_Unified_Unit.sql`) mapowania, aktualizując w locie wartości ról, na podstawie przypisań wyższej instancji. Zbudowany z wieloma mechanizmami zabezpieczającymi (wielostopniowe `dry-run`, limitowania i celowanie na sygnatury).
+
 ---
 
 ## Wymagania
@@ -115,6 +119,41 @@ Ten skrypt wymaga podania zakresu dat, dla którego mają zostać zaktualizowane
     *Przykład:*
     ```bash
     python rcp_updater.py --start-date 01.11.2024 --end-date 30.11.2024 --update
+    ```
+
+**4. Aktualizacja jednostek i ról (`unified_unit_updater.py`)**
+
+Skrypt modyfikuje powiązania w dokumentach, aktualizując: `JO zgłaszającego`, `JO prowadząca`, `Przypisani` oraz `Prowadzący`. Oparty o ujednolicone zapytanie SQL.
+
+*   **Tryb testowy (domyślny, "na sucho")**
+    Wypisze w kolorowej tabeli wszystkie docelowe zmiany, podświetlając modyfikacje na czerwono-zielono. Nie zapisze żadnych zmian w bazie.
+    ```bash
+    python unified_unit_updater.py
+    ```
+
+*   **Tryb testowy dla pojedynczej sygnatury**
+    Ogranicza podgląd zmian (nie modyfikując bazy) tylko dla jednego, wybranego wpisu o wskazanej Sygnaturze.
+    ```bash
+    python unified_unit_updater.py --signature "TWOJA_SYGNATURA"
+    ```
+
+*   **Aktualizacja wybranej liczby rekordów**
+    Przetworzy i nadpisze w bazie tylko N pierwszych znalezionych wierszy do aktualizacji. Przed uruchomieniem zapytania o ostateczne potwierdzenie. Parametr `--single` domyślnie zatrzymuje się na 30 elementach. Parametrem `--limit` możemy ustawić własną ilość.
+    ```bash
+    python unified_unit_updater.py --single
+    python unified_unit_updater.py --limit 10
+    ```
+
+*   **Aktualizacja wybranego, pojedynczego rekordu**
+    Ograniczy analizę bazy i wyśle aktualizację `UPDATE` do bazy SQL wyłącznie dla jednego wybranego wpisu.
+    ```bash
+    python unified_unit_updater.py --update-signature "TWOJA_SYGNATURA"
+    ```
+
+*   **Pełna aktualizacja**
+    Skrypt przeliczy i uaktualni wszystkie pasujące rekordy w całej bazie na produkcji. Przed uruchomieniem wymaga ostatecznego potwierdzenia.
+    ```bash
+    python unified_unit_updater.py --update
     ```
 
 ---
