@@ -157,6 +157,7 @@ def process_unified_unit(mode="test", target_signature=None, limit_count=30):
 
                 # Szukamy prawidłowej "Nazwa jednostki" analizując przedziały czasowe we wszystkich wierszach
                 valid_nazwa_jednostki = ""
+                valid_nazwa_z_id = ""
                 for row in rows:
                     data_od = parse_date(getattr(row, "Data od", None))
                     data_do = parse_date(getattr(row, "Data do", None))
@@ -175,24 +176,24 @@ def process_unified_unit(mode="test", target_signature=None, limit_count=30):
                         nazwa = getattr(row, "Nazwa jednostki", "") or ""
                         id_jednostki = getattr(row, "ID_Jednostki_Organizacyjnej", "")
                         if nazwa:
+                            valid_nazwa_jednostki = nazwa
                             if id_jednostki is not None and str(id_jednostki).strip():
-                                valid_nazwa_jednostki = f"{id_jednostki}#{nazwa}"
+                                valid_nazwa_z_id = f"{id_jednostki}#{nazwa}"
                             else:
-                                valid_nazwa_jednostki = nazwa
+                                valid_nazwa_z_id = nazwa
                             break
 
                 updates = {}
 
                 # Zakładamy nowe wartości na podstawie wymagań
                 nowe_jo_zglaszajacego = valid_nazwa_jednostki
+                nowe_jo_prowadzaca = valid_nazwa_z_id
 
                 # Jeśli nie ma "Nazwa jednostki" z poprawnego przedziału dat, nie nadpisuj JO
                 if not valid_nazwa_jednostki and aktualne_jo_zglaszajacego:
                     nowe_jo_zglaszajacego = aktualne_jo_zglaszajacego
+                    nowe_jo_prowadzaca = aktualna_jo_prowadzaca
 
-                nowe_jo_prowadzaca = (
-                    nowe_jo_zglaszajacego  # JO prowadząca na podstawie JO zgłaszającego
-                )
                 nowy_przypisani = zglaszajacy_smartptr
                 nowy_prowadzacy = zglaszajacy_smartptr
 
@@ -370,8 +371,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Aktualizuje dane jednostek i ról w WEBCON BPS na podstawie zapytania SQL.\n\n"
         "Aktualizowane pola:\n"
-        "- JO zgłaszającego = ID_Jednostki#Nazwa jednostki\n"
-        "- JO prowadząca = JO zgłaszającego\n"
+        "- JO zgłaszającego = Nazwa jednostki\n"
+        "- JO prowadząca = ID_Jednostki#Nazwa jednostki\n"
         "- Przypisani = Zgłaszający (SmartPTR)\n"
         "- Prowadzący = Zgłaszający (SmartPTR)\n\n"
         "Domyślnie działa w trybie testowym (dry-run) — nie wprowadza zmian w bazie.",
