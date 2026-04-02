@@ -104,12 +104,18 @@ def process_unified_unit(mode="test", target_signature=None):
         # 3. Analiza danych i przygotowanie listy aktualizacji
         matched_count = len(db_rows)
         no_changes_count = 0
+        processed_signatures = set()
 
         with Progress() as progress:
             task = progress.add_task("Analiza danych...", total=len(db_rows))
 
             for db_row in db_rows:
                 progress.advance(task)
+
+                # Deduplikacja: zabezpieczenie przed zwróceniem wielu wierszy dla tej samej sygnatury (np. Pracownik i Przełożony)
+                if db_row.WFD_Signature in processed_signatures:
+                    continue
+                processed_signatures.add(db_row.WFD_Signature)
 
                 updates = {}
                 # Pobranie danych ze źródła
@@ -197,7 +203,10 @@ def process_unified_unit(mode="test", target_signature=None):
                     }
                 )
 
-        console.print(f"\nPrzeanalizowano {matched_count} rekordów.", style="bold blue")
+        matched_count = len(processed_signatures)
+        console.print(
+            f"\nPrzeanalizowano {matched_count} unikalnych rekordów.", style="bold blue"
+        )
         console.print(f"Bez zmian: {no_changes_count} rekordów.", style="dim")
 
         if not records_to_change:

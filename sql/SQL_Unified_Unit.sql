@@ -41,7 +41,10 @@ LEFT JOIN (
         dbo.ClearWFElemID(DET73.DET_Att1) as DET_Att1_ID 
     FROM WFElementDetails DET73
     JOIN WFConfigurations WFCON ON DET73.DET_WFCONID = WFCON.WFCON_ID
-    WHERE WFCON.WFCON_Guid = '924e9282-f968-408d-ae7a-492d1ad46144'
+    WHERE WFCON.WFCON_Guid IN (
+        '924e9282-f968-408d-ae7a-492d1ad46144', -- Pracownicy
+        'a575d010-c775-4b02-84a4-b5e886a08645'  -- Przełożeni
+      )
       AND DET73.DET_IsDeleted = 0
 ) DET73_T ON CAST(D53_T.WFD_ID AS VARCHAR) = DET73_T.DET_Att1_ID
 -- 3. Łączymy z SQL_78 (Jednostka)
