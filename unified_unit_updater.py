@@ -60,7 +60,7 @@ def update_record(cursor, wfd_signature, updates):
     cursor.execute(query, tuple(params))
 
 
-def process_unified_unit(mode="test", target_signature=None):
+def process_unified_unit(mode="test", target_signature=None, limit_count=30):
     """Nawiązuje połączenie z bazą danych, pobiera dane z zapytania i opcjonalnie aktualizuje rekordy."""
     connection = None
     updated_count = 0
@@ -233,8 +233,12 @@ def process_unified_unit(mode="test", target_signature=None):
         table.add_column("Prowadzący", width=25)
         table.add_column("Status", style="yellow", width=15)
 
-        if mode in ("update", "single", "update_signature"):
-            total = 30 if mode == "single" else len(records_to_change)
+        if mode in ("update", "single", "limit", "update_signature"):
+            if mode in ("single", "limit"):
+                total = limit_count
+            else:
+                total = len(records_to_change)
+
             with Progress() as update_progress:
                 update_task = update_progress.add_task(
                     "Aktualizacja rekordów...", total=total
@@ -261,7 +265,7 @@ def process_unified_unit(mode="test", target_signature=None):
                         update_status,
                     )
 
-                    if mode == "single" and updated_count >= 30:
+                    if mode in ("single", "limit") and updated_count >= limit_count:
                         break
         else:
             for record in records_to_change:
@@ -283,10 +287,10 @@ def process_unified_unit(mode="test", target_signature=None):
                 f"Zakończono. Zaktualizowano {updated_count} rekordów.",
                 style="bold green",
             )
-        elif mode == "single":
+        elif mode in ("single", "limit"):
             connection.commit()
             console.print(
-                f"Tryb testowy (single). Zaktualizowano {updated_count} z maks. 30 rekordów.",
+                f"Zakończono w trybie z limitem. Zaktualizowano {updated_count} z maks. {limit_count} rekordów.",
                 style="bold green",
             )
         else:
@@ -333,6 +337,11 @@ if __name__ == "__main__":
         help="Aktualizuj WSZYSTKIE pasujące rekordy w bazie danych.",
     )
     mode_group.add_argument(
+        "--limit",
+        type=int,
+        help="Aktualizuj tylko podaną liczbę rekordów.",
+    )
+    mode_group.add_argument(
         "--update-signature",
         type=str,
         help="Aktualizuj tylko jeden konkretny rekord o podanej Sygnaturze.",
@@ -349,11 +358,22 @@ if __name__ == "__main__":
 
     mode = "test"
     target_signature = args.signature
+    limit_count = 30  # default for single
 
     if args.single:
         mode = "single"
         console.print(
             "UWAGA: Ta operacja zaktualizuje do 30 rekordów w bazie danych.",
+            style="bold yellow",
+        )
+        if input("Czy na pewno chcesz kontynuować? (tak/nie): ").lower() != "tak":
+            console.print("Operacja anulowana przez użytkownika.", style="bold red")
+            exit()
+    elif args.limit:
+        mode = "limit"
+        limit_count = args.limit
+        console.print(
+            f"UWAGA: Ta operacja zaktualizuje do {limit_count} rekordów w bazie danych.",
             style="bold yellow",
         )
         if input("Czy na pewno chcesz kontynuować? (tak/nie): ").lower() != "tak":
@@ -379,4 +399,6 @@ if __name__ == "__main__":
             console.print("Operacja anulowana przez użytkownika.", style="bold red")
             exit()
 
-    process_unified_unit(mode=mode, target_signature=target_signature)
+    process_unified_unit(
+        mode=mode, target_signature=target_signature, limit_count=limit_count
+    )
