@@ -8,6 +8,7 @@ SELECT
     D63.WFD_AttChoose12 AS 'JO prowadząca',
     D63.WFD_AttChoose3 AS 'Prowadzący',
     D63.WFD_AttChoose4 AS 'Przypisani',
+    D78_T.WFD_ID AS 'ID_Jednostki_Organizacyjnej',
     D78_T.WFD_AttText1 AS 'Nazwa jednostki',
     DET73_T.DET_Att2 AS 'Data od',
     DET73_T.DET_Att3 AS 'Data do',
