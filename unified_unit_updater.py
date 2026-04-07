@@ -186,11 +186,11 @@ def process_unified_unit(mode="test", target_signature=None, limit_count=30):
                 updates = {}
 
                 # Zakładamy nowe wartości na podstawie wymagań
-                nowe_jo_zglaszajacego = valid_nazwa_jednostki
+                nowe_jo_zglaszajacego = valid_nazwa_z_id
                 nowe_jo_prowadzaca = valid_nazwa_z_id
 
                 # Jeśli nie ma "Nazwa jednostki" z poprawnego przedziału dat, nie nadpisuj JO
-                if not valid_nazwa_jednostki and aktualne_jo_zglaszajacego:
+                if not valid_nazwa_z_id and aktualne_jo_zglaszajacego:
                     nowe_jo_zglaszajacego = aktualne_jo_zglaszajacego
                     nowe_jo_prowadzaca = aktualna_jo_prowadzaca
 
@@ -371,8 +371,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Aktualizuje dane jednostek i ról w WEBCON BPS na podstawie zapytania SQL.\n\n"
         "Aktualizowane pola:\n"
-        "- JO zgłaszającego = Nazwa jednostki\n"
-        "- JO prowadząca = ID_Jednostki#Nazwa jednostki\n"
+        "- JO zgłaszającego = ID_Jednostki#Nazwa jednostki\n"
+        "- JO prowadząca = JO zgłaszającego\n"
         "- Przypisani = Zgłaszający (SmartPTR)\n"
         "- Prowadzący = Zgłaszający (SmartPTR)\n\n"
         "Domyślnie działa w trybie testowym (dry-run) — nie wprowadza zmian w bazie.",
