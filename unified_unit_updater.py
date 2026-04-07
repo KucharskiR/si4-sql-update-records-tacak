@@ -25,7 +25,7 @@ SQL_FILE_PATH = os.path.join(
 )
 
 # Mapowanie kolumn, które chcemy zaktualizować (do dostosowania nazwy w bazie jeśli są inne)
-# WFD_AttText6 = JO zgłaszającego
+# WFD_AttChoose13 = JO zgłaszającego
 # WFD_AttChoose12 = JO prowadząca
 # WFD_AttChoose4 = Przypisani
 # WFD_AttChoose3 = Prowadzący
@@ -207,7 +207,7 @@ def process_unified_unit(mode="test", target_signature=None, limit_count=30):
                 # Sprawdzamy co trzeba zaktualizować
                 # JO zgłaszającego
                 if aktualne_jo_zglaszajacego != nowe_jo_zglaszajacego:
-                    updates["WFD_AttText6"] = nowe_jo_zglaszajacego
+                    updates["WFD_AttChoose13"] = nowe_jo_zglaszajacego
                     columns_info["jo_zglaszajacego"] = (
                         f"[red]{aktualne_jo_zglaszajacego}[/red]\n-> [green]{nowe_jo_zglaszajacego}[/green]"
                     )

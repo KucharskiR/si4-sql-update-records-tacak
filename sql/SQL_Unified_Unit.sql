@@ -4,7 +4,7 @@ SELECT
     D63.WFD_Guid,
     D63.WFD_AttChoose10 AS 'Zgłaszający SmartPTR',
     dbo.ClearWFElemID(D63.WFD_AttChoose10) AS 'ID z Teczki',
-    D63.WFD_AttText6 AS 'JO zgłaszjącego (SmartPTR)',
+    D63.WFD_AttChoose13 AS 'JO zgłaszającego (SmartPTR)',
     D63.WFD_AttChoose12 AS 'JO prowadząca',
     D63.WFD_AttChoose3 AS 'Prowadzący',
     D63.WFD_AttChoose4 AS 'Przypisani',
