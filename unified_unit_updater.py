@@ -194,7 +194,23 @@ def process_unified_unit(mode="test", target_signature=None, limit_count=30):
                     nowe_jo_zglaszajacego = aktualne_jo_zglaszajacego
                     nowe_jo_prowadzaca = aktualna_jo_prowadzaca
 
-                nowy_przypisani = zglaszajacy_smartptr
+                # Aktualizacja pola Przypisani: dopisujemy Zgłaszającego, jeśli jeszcze go tam nie ma
+                if aktualni_przypisani:
+                    przypisani_list = [
+                        p.strip() for p in aktualni_przypisani.split(";") if p.strip()
+                    ]
+                    if (
+                        zglaszajacy_smartptr
+                        and zglaszajacy_smartptr not in przypisani_list
+                    ):
+                        nowy_przypisani = (
+                            aktualni_przypisani + f" ; {zglaszajacy_smartptr}"
+                        )
+                    else:
+                        nowy_przypisani = aktualni_przypisani
+                else:
+                    nowy_przypisani = zglaszajacy_smartptr
+
                 nowy_prowadzacy = zglaszajacy_smartptr
 
                 columns_info = {
@@ -373,7 +389,7 @@ if __name__ == "__main__":
         "Aktualizowane pola:\n"
         "- JO zgłaszającego = ID_Jednostki#Nazwa jednostki\n"
         "- JO prowadząca = JO zgłaszającego\n"
-        "- Przypisani = Zgłaszający (SmartPTR)\n"
+        "- Przypisani = dopisanie Zgłaszającego (nie usuwa poprzednich)\n"
         "- Prowadzący = Zgłaszający (SmartPTR)\n\n"
         "Domyślnie działa w trybie testowym (dry-run) — nie wprowadza zmian w bazie.",
         formatter_class=argparse.RawTextHelpFormatter,
